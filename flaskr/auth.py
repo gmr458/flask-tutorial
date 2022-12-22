@@ -14,7 +14,7 @@ from flask import (
 )
 from werkzeug.security import check_password_hash, generate_password_hash
 
-from flaskr.database import get_database
+from flaskr.database import get_mysql_connection
 
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -27,8 +27,6 @@ def register():
         username = request.form["username"]
         password = request.form["password"]
 
-        database = get_database()
-
         error = None
 
         if not username:
@@ -37,14 +35,16 @@ def register():
             error = "Password is required."
 
         if error is None:
+            connection = get_mysql_connection()
             try:
-                database.execute(
-                    """INSERT INTO `user` (`username`, `password`)
-                        VALUES (?, ?)""",
-                    (username, generate_password_hash(password)),
-                )
-                database.commit()
-            except database.IntegrityError:
+                with connection.cursor() as cursor:
+                    cursor.execute(
+                        """INSERT INTO `user` (`username`, `password`)
+                            VALUES (%s, %s)""",
+                        (username, generate_password_hash(password)),
+                    )
+                connection.commit()
+            except connection.IntegrityError:
                 error = f"User {username} is already registered."
             else:
                 return redirect(url_for("auth.login"))
@@ -62,22 +62,22 @@ def login():
         username = request.form["username"]
         password = request.form["password"]
 
-        database = get_database()
-
         error = None
 
-        user = database.execute(
-            """SELECT * FROM `user`
-                WHERE `username` = ?""",
-            (username,),
-        ).fetchone()
+        connection = get_mysql_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """SELECT * FROM `user`
+                    WHERE `username` = %s""",
+                (username,),
+            )
+            user = cursor.fetchone()
 
         if user is None:
             error = "Incorrect username."
         elif not check_password_hash(user["password"], password):
             error = "Incorrect password."
-
-        if error is None:
+        else:
             session.clear()
             session["user_id"] = user["id"]
             return redirect(url_for("index"))
@@ -97,15 +97,14 @@ def load_logged_in_user() -> None:
     if user_id is None:
         g.user = None
     else:
-        g.user = (
-            get_database()
-            .execute(
+        connection = get_mysql_connection()
+        with connection.cursor() as cursor:
+            cursor.execute(
                 """SELECT * FROM `user`
-                    WHERE `id` = ?""",
+                    WHERE `id` = %s""",
                 (user_id,),
             )
-            .fetchone()
-        )
+            g.user = cursor.fetchone()
 
 
 @bp.route("/logout")
@@ -117,7 +116,6 @@ def logout():
 
 def login_required(view):
     """Decorator for check if the user is logged."""
-
     @functools.wraps(view)
     def wrapped_view(**kwargs):
         if g.user is None:

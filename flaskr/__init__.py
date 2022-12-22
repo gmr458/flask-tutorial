@@ -1,24 +1,21 @@
-"""Module flaskr."""
-import os
+"""Module flaskr"""
 
 from flask import Flask
 
-# Database
-from . import database
-
-# Blueprints
-from . import auth, blog
+from flaskr import database, auth, blog
 
 
 def create_app(test_config=None):
-    """This is the application factory function, create and configure the app."""
-
+    """Application factory function, create and configure the app."""
     app = Flask(__name__, instance_relative_config=True)
 
     # Setting some default configuration that the app will use.
     app.config.from_mapping(
         SECRET_KEY="dev",
-        DATABASE=os.path.join(app.instance_path, "flaskr.sqlite"),
+        MYSQL_HOST="localhost",
+        MYSQL_USER="root",
+        MYSQL_PASSWORD="Password123$",
+        MYSQL_DATABASE="flaskr",
     )
 
     if test_config is None:
@@ -28,12 +25,6 @@ def create_app(test_config=None):
         # Load the test config if passed in
         app.config.from_mapping(test_config)
 
-    # Ensure the instance folder exists
-    try:
-        os.makedirs(app.instance_path)
-    except OSError:
-        pass
-
     # Init the database
     database.init_app(app)
 
@@ -42,9 +33,5 @@ def create_app(test_config=None):
     app.register_blueprint(blog.bp)
 
     app.add_url_rule("/", endpoint="index")
-
-    @app.route("/hello")
-    def hello():
-        return "Hello, World!"
 
     return app

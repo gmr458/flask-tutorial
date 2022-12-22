@@ -12,7 +12,7 @@ from flask import (
 from werkzeug.exceptions import abort
 
 from flaskr.auth import login_required
-from flaskr.database import get_database
+from flaskr.database import get_mysql_connection
 
 bp = Blueprint("blog", __name__)
 
@@ -21,15 +21,16 @@ bp = Blueprint("blog", __name__)
 def index():
     """View GET blog/index.html
     The index will show all of the posts, most recent first."""
-    database = get_database()
-
-    posts = database.execute(
-        """SELECT p.`id`, `title`, `body`, `created`, `author_id`, `username`
-            FROM `post` `p`
-            JOIN `user` `u`
-            ON p.`author_id` = u.`id`
-            ORDER BY created DESC"""
-    ).fetchall()
+    connection = get_mysql_connection()
+    with connection.cursor() as cursor:
+        cursor.execute(
+            """SELECT p.`id`, `title`, `body`, `created`, `author_id`, `username`
+                FROM `post` `p`
+                JOIN `user` `u`
+                ON p.`author_id` = u.`id`
+                ORDER BY created DESC"""
+        )
+        posts = cursor.fetchall()
 
     return render_template("blog/index.html", posts=posts)
 
@@ -51,13 +52,14 @@ def create():
         if error is not None:
             flash(error)
         else:
-            database = get_database()
-            database.execute(
-                """INSERT INTO `post` (`title`, `body`, `author_id`)
-                    VALUES (?, ?, ?)""",
-                (title, body, g.user["id"]),
-            )
-            database.commit()
+            connection = get_mysql_connection()
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """INSERT INTO `post` (`title`, `body`, `author_id`)
+                        VALUES (%s, %s, %s)""",
+                    (title, body, g.user["id"]),
+                )
+            connection.commit()
 
             return redirect(url_for("blog.index"))
 
@@ -65,19 +67,18 @@ def create():
 
 
 def get_post(id, check_author=True):
-    """Get post from database by id"""
-    post = (
-        get_database()
-        .execute(
+    """Get post from database by id."""
+    connection = get_mysql_connection()
+    with connection.cursor() as cursor:
+        cursor.execute(
             """SELECT p.`id`, `title`, `body`, `created`, `author_id`, `username`
                 FROM `post` `p`
                 JOIN `user` `u`
                 ON p.`author_id` = u.`id`
-                WHERE p.`id` = ?""",
+                WHERE p.`id` = %s""",
             (id,),
         )
-        .fetchone()
-    )
+        post = cursor.fetchone()
 
     if post is None:
         abort(404, f"Post id {id} doesn't exist.")
@@ -107,14 +108,15 @@ def update(id):
         if error is not None:
             flash(error)
         else:
-            database = get_database()
-            database.execute(
-                """UPDATE `post`
-                    SET `title` = ?, `body` = ?
-                    WHERE `id` = ?""",
-                (title, body, id),
-            )
-            database.commit()
+            connection = get_mysql_connection()
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """UPDATE `post`
+                        SET `title` = %s, `body` = %s
+                        WHERE `id` = %s""",
+                    (title, body, id),
+                )
+            connection.commit()
 
             return redirect(url_for("blog.index"))
 
@@ -127,8 +129,9 @@ def delete(id):
     """View POST /id/delete"""
     get_post(id)
 
-    database = get_database()
-    database.execute("DELETE FROM `post` WHERE `id` = ?", (id,))
-    database.commit()
+    connection = get_mysql_connection()
+    with connection.cursor() as cursor:
+        cursor.execute("DELETE FROM `post` WHERE `id` = %s", (id,))
+    connection.commit()
 
     return redirect(url_for("blog.index"))

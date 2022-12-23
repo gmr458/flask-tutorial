@@ -1,6 +1,9 @@
 """Module flaskr"""
 
+import os
+
 from flask import Flask
+from dotenv import load_dotenv
 
 from flaskr import database, auth, blog
 
@@ -9,13 +12,17 @@ def create_app(test_config=None):
     """Application factory function, create and configure the app."""
     app = Flask(__name__, instance_relative_config=True)
 
+    if app.config["DEBUG"] is True:
+        load_dotenv()
+
     # Setting some default configuration that the app will use.
     app.config.from_mapping(
-        SECRET_KEY="dev",
-        MYSQL_HOST="localhost",
-        MYSQL_USER="root",
-        MYSQL_PASSWORD="Password123$",
-        MYSQL_DATABASE="flaskr",
+        SECRET_KEY=os.environ.get("SECRET_KEY", "dev"),
+        MYSQL_USER=os.environ.get("MYSQL_USER", "user"),
+        MYSQL_PASSWORD=os.environ.get("MYSQL_PASSWORD", "password"),
+        MYSQL_HOST=os.environ.get("MYSQL_HOST", "localhost"),
+        MYSQL_DATABASE=os.environ.get("MYSQL_DATABASE", "flaskr"),
+        MYSQL_PORT=os.environ.get("MYSQL_PORT", "3306"),
     )
 
     if test_config is None:

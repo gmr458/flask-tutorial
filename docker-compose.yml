@@ -1,0 +1,36 @@
+version: "3.9"
+services:
+  mysql:
+    container_name: flaskr_mysql
+    image: mysql:8.0.31
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_DATABASE: flaskr
+      TZ: America/New_York
+    ports:
+      - "3306:3306"
+    command: --authentication-policy=mysql_native_password
+    restart: always
+    networks:
+      - default
+    volumes:
+      - ./flaskr/schema.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ./local-data:/var/lib/mysql
+  web:
+    container_name: flaskr_web
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      SECRET_KEY: dev
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+      MYSQL_HOST: flaskr_mysql
+      MYSQL_DATABASE: flaskr
+      MYSQL_PORT: 3306
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql

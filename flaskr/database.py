@@ -8,12 +8,22 @@ import pymysql.cursors
 def get_mysql_connection():
     """Get connection to the MySQL database."""
     if "connection" not in g:
+        ssl = None
+        ssl_verify_identity = None
+
+        if current_app.config["DEBUG"] is not True:
+            ssl = {"ca": "/etc/ssl/cert.pem"}
+            ssl_verify_identity = True
+
         g.connection = pymysql.connect(
-            host=current_app.config["MYSQL_HOST"],
             user=current_app.config["MYSQL_USER"],
             password=current_app.config["MYSQL_PASSWORD"],
+            host=current_app.config["MYSQL_HOST"],
             database=current_app.config["MYSQL_DATABASE"],
+            port=int(current_app.config["MYSQL_PORT"]),
             cursorclass=pymysql.cursors.DictCursor,
+            ssl=ssl,
+            ssl_verify_identity=ssl_verify_identity,
         )
 
     return g.connection

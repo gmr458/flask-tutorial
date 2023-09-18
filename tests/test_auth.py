@@ -1,7 +1,7 @@
 """Module test_auth flaskr"""
 
-import pytest
 from flask import g, session
+import pytest
 
 from flaskr.database import get_database
 

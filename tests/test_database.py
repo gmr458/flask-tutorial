@@ -3,6 +3,7 @@
 import sqlite3
 
 import pytest
+
 from flaskr.database import get_database
 
 

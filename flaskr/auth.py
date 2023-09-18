@@ -16,6 +16,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from flaskr.database import get_database
 
+
 bp = Blueprint("auth", __name__, url_prefix="/auth")
 
 
@@ -39,7 +40,7 @@ def register():
         if error is None:
             try:
                 database.execute(
-                    """INSERT INTO `user` (`username`, `password`)
+                    """INSERT INTO user (username, password)
                         VALUES (?, ?)""",
                     (username, generate_password_hash(password)),
                 )
@@ -67,8 +68,8 @@ def login():
         error = None
 
         user = database.execute(
-            """SELECT * FROM `user`
-                WHERE `username` = ?""",
+            """SELECT * FROM user
+                WHERE username = ?""",
             (username,),
         ).fetchone()
 
@@ -100,8 +101,8 @@ def load_logged_in_user() -> None:
         g.user = (
             get_database()
             .execute(
-                """SELECT * FROM `user`
-                    WHERE `id` = ?""",
+                """SELECT * FROM user
+                    WHERE id = ?""",
                 (user_id,),
             )
             .fetchone()

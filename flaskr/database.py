@@ -3,7 +3,7 @@
 import sqlite3
 
 import click
-from flask import current_app, g, Flask
+from flask import Flask, current_app, g
 
 
 def get_database() -> sqlite3.Connection:

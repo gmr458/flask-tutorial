@@ -1,14 +1,6 @@
 """Module Blog Blueprint"""
 
-from flask import (
-    Blueprint,
-    flash,
-    g,
-    redirect,
-    render_template,
-    request,
-    url_for,
-)
+from flask import Blueprint, flash, g, redirect, render_template, request, url_for
 from werkzeug.exceptions import abort
 
 from flaskr.auth import login_required
@@ -24,10 +16,16 @@ def index():
     database = get_database()
 
     posts = database.execute(
-        """SELECT p.`id`, `title`, `body`, `created`, `author_id`, `username`
-            FROM `post` `p`
-            JOIN `user` `u`
-            ON p.`author_id` = u.`id`
+        """SELECT
+                p.id,
+                title,
+                body,
+                created,
+                author_id,
+                username
+            FROM post p
+            JOIN user u
+                ON p.author_id = u.id
             ORDER BY created DESC"""
     ).fetchall()
 
@@ -53,8 +51,11 @@ def create():
         else:
             database = get_database()
             database.execute(
-                """INSERT INTO `post` (`title`, `body`, `author_id`)
-                    VALUES (?, ?, ?)""",
+                """INSERT INTO post (
+                        title, 
+                        body, 
+                        author_id
+                    ) VALUES (?, ?, ?)""",
                 (title, body, g.user["id"]),
             )
             database.commit()
@@ -69,11 +70,17 @@ def get_post(id, check_author=True):
     post = (
         get_database()
         .execute(
-            """SELECT p.`id`, `title`, `body`, `created`, `author_id`, `username`
-                FROM `post` `p`
-                JOIN `user` `u`
-                ON p.`author_id` = u.`id`
-                WHERE p.`id` = ?""",
+            """SELECT
+                    p.id,
+                    title,
+                    body,
+                    created,
+                    author_id,
+                    username
+                FROM post p
+                JOIN user u
+                    ON p.author_id = u.id
+                WHERE p.id = ?""",
             (id,),
         )
         .fetchone()
@@ -109,9 +116,9 @@ def update(id):
         else:
             database = get_database()
             database.execute(
-                """UPDATE `post`
-                    SET `title` = ?, `body` = ?
-                    WHERE `id` = ?""",
+                """UPDATE post
+                    SET title = ?, body = ?
+                    WHERE id = ?""",
                 (title, body, id),
             )
             database.commit()
@@ -128,7 +135,7 @@ def delete(id):
     get_post(id)
 
     database = get_database()
-    database.execute("DELETE FROM `post` WHERE `id` = ?", (id,))
+    database.execute("DELETE FROM post WHERE id = ?", (id,))
     database.commit()
 
     return redirect(url_for("blog.index"))

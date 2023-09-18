@@ -1,13 +1,11 @@
-"""Module flaskr."""
+"""Module flaskr"""
+
 import os
 
 from flask import Flask
 
-# Database
-from . import database
-
-# Blueprints
-from . import auth, blog
+from flaskr import database
+from flaskr import auth, blog
 
 
 def create_app(test_config=None):

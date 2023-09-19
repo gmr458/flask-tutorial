@@ -1,6 +1,6 @@
 """Module database"""
 
-from flask import current_app, g, Flask
+from flask import Flask, current_app, g
 import pymysql
 import pymysql.cursors
 

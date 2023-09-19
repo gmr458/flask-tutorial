@@ -116,6 +116,7 @@ def logout():
 
 def login_required(view):
     """Decorator for check if the user is logged."""
+
     @functools.wraps(view)
     def wrapped_view(**kwargs):
         if g.user is None:

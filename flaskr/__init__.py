@@ -2,10 +2,10 @@
 
 import os
 
-from flask import Flask
 from dotenv import load_dotenv
+from flask import Flask
 
-from flaskr import database, auth, blog
+from flaskr import auth, blog, database
 
 
 def create_app(test_config=None):

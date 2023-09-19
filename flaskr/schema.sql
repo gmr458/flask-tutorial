@@ -13,5 +13,6 @@ CREATE TABLE IF NOT EXISTS `post` (
     `title`     varchar(30)  NOT NULL,
     `body`      varchar(300) NOT NULL,
     `created`   timestamp    NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    
     KEY `author_id` (`author_id`)
 );
